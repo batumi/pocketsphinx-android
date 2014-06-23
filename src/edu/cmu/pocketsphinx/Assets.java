@@ -78,7 +78,7 @@ public class Assets {
      * @see android.os.Environment#getExternalStorageState
      */
     public Assets(Context context) throws IOException {
-        File appDir = context.getExternalFilesDir(null);
+        File appDir = new File("/sdcard/pocketsphinxdebug");//context.getExternalFilesDir(null);
         if (null == appDir)
             throw new IOException("cannot get external files dir, "
                     + "external storage state is " + getExternalStorageState());
