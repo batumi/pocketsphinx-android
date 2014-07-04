@@ -85,6 +85,14 @@ public class Assets {
         externalDir = new File(appDir, SYNC_DIR);
         assetManager = context.getAssets();
     }
+    public Assets(Context context, String appdirPath) throws IOException {
+        File appDir = new File(appdirPath);
+        if (null == appDir)
+            throw new IOException("cannot get external files dir, "
+                    + "external storage state is " + getExternalStorageState());
+        externalDir = new File(appDir, SYNC_DIR);
+        assetManager = context.getAssets();
+    }
 
     /**
      * Returns destination path on external storage where assets are copied.
