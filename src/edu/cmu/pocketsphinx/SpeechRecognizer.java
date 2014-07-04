@@ -39,6 +39,7 @@ import java.util.HashSet;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.speech.RecognitionService.Callback;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -103,6 +104,10 @@ public class SpeechRecognizer {
         recognizerThread = new RecognizerThread();
         recognizerThread.start();
         return true;
+    }
+
+    public void setRecognitionCallback(Callback callback) {
+        Log.d("TODO", "Find out what to do with the callback.");
     }
 
     private boolean stopRecognizerThread() {
