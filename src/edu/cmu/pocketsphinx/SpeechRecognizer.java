@@ -228,7 +228,7 @@ public class SpeechRecognizer {
                     AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, 8192); // TODO:calculate
                                                            // properly
-            decoder.startUtt(null);
+            decoder.startUtt("audio_utterance_" + System.currentTimeMillis());
             recorder.startRecording();
             short[] buffer = new short[BUFFER_SIZE];
             boolean inSpeech = decoder.getInSpeech();
