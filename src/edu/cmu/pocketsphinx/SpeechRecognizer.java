@@ -33,13 +33,19 @@ package edu.cmu.pocketsphinx;
 import static java.lang.String.format;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
+
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.speech.RecognitionListener;
 import android.speech.RecognitionService.Callback;
+import android.speech.RecognizerIntent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -64,6 +70,10 @@ public class SpeechRecognizer {
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
 
     private final int sampleRate;
+
+    private Callback mRecognitionCallback;
+    public static final String EXTRA_UTTERANCE_IDS = "cmusphinx.sourceforge.net.extra.UTTERANCE_IDS";
+
 
     protected SpeechRecognizer(Config config) {
         sampleRate = (int) config.getFloat("-samprate");
@@ -107,7 +117,12 @@ public class SpeechRecognizer {
     }
 
     public void setRecognitionCallback(Callback callback) {
-        Log.d("TODO", "Find out what to do with the callback.");
+        if (callback == null) {
+            Log.d("TODO", "The setRecognitionCallback was null.");
+        } else {
+            Log.d("TODO", "Setting the setRecognitionCallback.");
+        }
+        mRecognitionCallback = callback;
     }
 
     private boolean stopRecognizerThread() {
@@ -224,8 +239,8 @@ public class SpeechRecognizer {
         @Override
         public void run() {
             AudioRecord recorder = new AudioRecord(
-                    AudioSource.VOICE_RECOGNITION, sampleRate,
-                    AudioFormat.CHANNEL_IN_MONO,
+                AudioSource.VOICE_RECOGNITION, sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, 8192); // TODO:calculate
                                                            // properly
             decoder.startUtt("audio_utterance_" + System.currentTimeMillis());
@@ -282,7 +297,7 @@ public class SpeechRecognizer {
         @Override
         protected void execute(RecognitionListener listener) {
             if (state)
-                listener.onBeginningOfSpeech();
+                listener.onReadyForSpeech(null);
             else
                 listener.onEndOfSpeech();
         }
@@ -299,10 +314,61 @@ public class SpeechRecognizer {
 
         @Override
         protected void execute(RecognitionListener listener) {
-            if (finalResult)
-                listener.onResult(hypothesis);
-            else
-                listener.onPartialResult(hypothesis);
+            Bundle bundle = new Bundle();
+
+            // Make first character upper case, and the rest lower case
+            String text = "";
+            if (hypothesis != null) {
+                text = hypothesis.getHypstr();
+            }
+
+            if (text != null && !"".equals(text) && text.length() > 1) {
+                text = text.substring(0, 1).toUpperCase(Locale.getDefault())
+                + text.substring(1).toLowerCase(Locale.getDefault());
+            } else {
+                text = "";
+            }
+
+            ArrayList<String> hypotheses = new ArrayList<String>();
+            hypotheses.add(text);
+            
+            float[] confidences = new float[]{0, 0, 0, 0, 0};
+            if (hypothesis != null) {
+                confidences[0] = hypothesis.getBestScore();
+            }
+            ArrayList<String> utteranceIds = new ArrayList<String>();
+            if (hypothesis != null) {
+                utteranceIds.add(hypothesis.getUttid());
+            } else {
+                utteranceIds.add(0+"");
+            }
+            
+            // Pad the partial results to 5 
+            if (!finalResult) {
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+            }
+
+            bundle.putStringArrayList(RecognizerIntent.EXTRA_RESULTS, hypotheses);
+            bundle.putFloatArray(RecognizerIntent.EXTRA_CONFIDENCE_SCORES, confidences);
+            bundle.putStringArrayList(SpeechRecognizer.EXTRA_UTTERANCE_IDS, utteranceIds);
+
+            if (finalResult) {
+                bundle.putBoolean(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+                listener.onResults(bundle);
+            } else {
+                bundle.putBoolean(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+                listener.onPartialResults(bundle);
+            }
         }
     }
 }
