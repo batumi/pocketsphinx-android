@@ -28,6 +28,8 @@ the following command to checkout from repository:
 git clone https://github.com/cmusphinx/sphinxbase
 git clone https://github.com/cmusphinx/pocketsphinx
 git clone https://github.com/cmusphinx/pocketsphinx-android
+export POCKETSPHINX_HOME=`pwd`/pocketsphinx
+export SPINXBASE_HOME=`pwd`/sphinxbase
 ```
 
 After checkout you need to update the file 'local.properties' in the
@@ -43,7 +45,7 @@ sdk.dir=/Users/User/Library/Android/sdk
 ndk.dir=/Users/User/Library/Android/sdk/ndk-bundle
 ```
 
-After everything is set, run `gradle build`. It will create
+After everything is set, run `./gradlew build`. It will create
 pocketsphinx-android-5prealpha-release.aar and
 pocketsphinx-android-5prealpha-debug.aar in build/output.
 
@@ -56,7 +58,7 @@ as usual with Android Studio or directly in gradle
     dependencies {
         compile (name:'pocketsphinx-android-debug', ext:'aar')
     }
-    
+
     repositories {
         flatDir {
                 dirs 'libs'
