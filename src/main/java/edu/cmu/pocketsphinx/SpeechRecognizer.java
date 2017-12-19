@@ -33,13 +33,19 @@ package edu.cmu.pocketsphinx;
 import static java.lang.String.format;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
+import android.speech.RecognitionListener;
+import android.speech.RecognitionService.Callback;
+import android.speech.RecognizerIntent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -49,7 +55,7 @@ import android.util.Log;
  * starts a listener thread which records the data and recognizes it using
  * Pocketsphinx engine. Recognition events are passed to a client using
  * {@link RecognitionListener}
- * 
+ *
  */
 public class SpeechRecognizer {
 
@@ -57,21 +63,24 @@ public class SpeechRecognizer {
 
     private final Decoder decoder;
 
-    private final int sampleRate;        
+    private final int sampleRate;
     private final static float BUFFER_SIZE_SECONDS = 0.4f;
     private int bufferSize;
     private final AudioRecord recorder;
-    
+
     private Thread recognizerThread;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    
+
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
-    
+
+    private Callback mRecognitionCallback;
+    public static final String EXTRA_UTTERANCE_IDS = "cmusphinx.sourceforge.net.extra.UTTERANCE_IDS";
+
     /**
-     * Creates speech recognizer. Recognizer holds the AudioRecord object, so you 
+     * Creates speech recognizer. Recognizer holds the AudioRecord object, so you
      * need to call {@link release} in order to properly finalize it.
-     * 
+     *
      * @param config The configuration object
      * @throws IOException thrown if audio recorder can not be created for some reason.
      */
@@ -111,7 +120,7 @@ public class SpeechRecognizer {
 
     /**
      * Starts recognition. Does nothing if recognition is active.
-     * 
+     *
      * @return true if recognition was actually started
      */
     public boolean startListening(String searchName) {
@@ -128,9 +137,9 @@ public class SpeechRecognizer {
     /**
      * Starts recognition. After specified timeout listening stops and the
      * endOfSpeech signals about that. Does nothing if recognition is active.
-     * 
+     *
      * @timeout - timeout in milliseconds to listen.
-     * 
+     *
      * @return true if recognition was actually started
      */
     public boolean startListening(String searchName, int timeout) {
@@ -142,6 +151,15 @@ public class SpeechRecognizer {
         recognizerThread = new RecognizerThread(timeout);
         recognizerThread.start();
         return true;
+    }
+
+    /**
+     * Adds a recognition callback
+     *
+     * @param callback Callback
+     */
+    public void setRecognitionCallback(Callback callback) {
+        mRecognitionCallback = callback;
     }
 
     private boolean stopRecognizerThread() {
@@ -163,7 +181,7 @@ public class SpeechRecognizer {
     /**
      * Stops recognition. All listeners should receive final result if there is
      * any. Does nothing if recognition is not active.
-     * 
+     *
      * @return true if recognition was actually stopped
      */
     public boolean stop() {
@@ -179,7 +197,7 @@ public class SpeechRecognizer {
     /**
      * Cancels recognition. Listeners do not receive final result. Does nothing
      * if recognition is not active.
-     * 
+     *
      * @return true if recognition was actually canceled
      */
     public boolean cancel() {
@@ -190,27 +208,27 @@ public class SpeechRecognizer {
 
         return result;
     }
-    
+
     /**
      * Returns the decoder object for advanced operation (dictionary extension, utterance
      * data collection, adaptation and so on).
-     * 
+     *
      * @return Decoder
      */
     public Decoder getDecoder() {
         return decoder;
     }
-    
+
     /**
      * Shutdown the recognizer and release the recorder
      */
     public void shutdown() {
         recorder.release();
     }
-    
+
     /**
      * Gets name of the currently active search.
-     * 
+     *
      * @return active search name or null if no search was started
      */
     public String getSearchName() {
@@ -223,7 +241,7 @@ public class SpeechRecognizer {
 
     /**
      * Adds searches based on JSpeech grammar file.
-     * 
+     *
      * @param name
      *            search name
      * @param file
@@ -236,7 +254,7 @@ public class SpeechRecognizer {
 
     /**
      * Adds searches based on JSpeech grammar string.
-     * 
+     *
      * @param name
      *            search name
      * @param file
@@ -248,7 +266,7 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on N-gram language model.
-     * 
+     *
      * @param name
      *            search name
      * @param file
@@ -261,7 +279,7 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on a single phrase.
-     * 
+     *
      * @param name
      *            search name
      * @param phrase
@@ -273,7 +291,7 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on a keyphrase file.
-     * 
+     *
      * @param name
      *            search name
      * @param phrase
@@ -287,21 +305,21 @@ public class SpeechRecognizer {
     public void addKeywordSearch(String name, File file) {
         decoder.setKws(name, file.getPath());
     }
-    
+
     /**
      * Adds a search to look for the phonemes
      *
      * @param name
      *          search name
      * @param phonetic bigram model
-     * 
+     *
      */
     public void addAllphoneSearch(String name, File file) {
         decoder.setAllphoneFile(name, file.getPath());
     }
 
     private final class RecognizerThread extends Thread {
-        
+
         private int remainingSamples;
         private int timeoutSamples;
         private final static int NO_TIMEOUT = -1;
@@ -332,6 +350,8 @@ public class SpeechRecognizer {
 
             Log.d(TAG, "Starting decoding");
 
+            // https://github.com/cmusphinx/pocketsphinx-android/pull/5#issuecomment-67852935
+            // decoder.startUtt("audio_utterance_" + System.currentTimeMillis()); // TODO how to use get_rawdata
             decoder.startUtt();
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
@@ -353,7 +373,7 @@ public class SpeechRecognizer {
                     //     max = Math.max(max, Math.abs(buffer[i]));
                     // }
                     // Log.e("!!!!!!!!", "Level: " + max);
-                    
+
                     if (decoder.getInSpeech() != inSpeech) {
                         inSpeech = decoder.getInSpeech();
                         mainHandler.post(new InSpeechChangeEvent(inSpeech));
@@ -405,6 +425,7 @@ public class SpeechRecognizer {
         protected void execute(RecognitionListener listener) {
             if (state)
                 listener.onBeginningOfSpeech();
+                // listener.onReadyForSpeech(null); // TODO why changed this
             else
                 listener.onEndOfSpeech();
         }
@@ -421,10 +442,62 @@ public class SpeechRecognizer {
 
         @Override
         protected void execute(RecognitionListener listener) {
-            if (finalResult)
-                listener.onResult(hypothesis);
-            else
-                listener.onPartialResult(hypothesis);
+            Bundle bundle = new Bundle();
+
+            // Make first character upper case, and the rest lower case
+            String text = "";
+            if (hypothesis != null) {
+                text = hypothesis.getHypstr();
+            }
+
+            if (text != null && !"".equals(text) && text.length() > 1) {
+                text = text.substring(0, 1).toUpperCase(Locale.getDefault())
+                + text.substring(1).toLowerCase(Locale.getDefault());
+            } else {
+                text = "";
+            }
+
+            ArrayList<String> hypotheses = new ArrayList<String>();
+            hypotheses.add(text);
+
+            float[] confidences = new float[]{0, 0, 0, 0, 0};
+            if (hypothesis != null) {
+                confidences[0] = hypothesis.getBestScore();
+            }
+            ArrayList<String> utteranceIds = new ArrayList<String>();
+            if (hypothesis != null) {
+                // utteranceIds.add(hypothesis.getUttid()); // Doesnt exist anymore
+                utteranceIds.add("audio_utterance_" + System.currentTimeMillis());
+            } else {
+                utteranceIds.add(0+"");
+            }
+
+            // Pad the partial results to 5
+            if (!finalResult) {
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+
+                hypotheses.add("");
+                utteranceIds.add(0+"");
+            }
+
+            bundle.putStringArrayList(RecognizerIntent.EXTRA_RESULTS, hypotheses);
+            bundle.putFloatArray(RecognizerIntent.EXTRA_CONFIDENCE_SCORES, confidences);
+            bundle.putStringArrayList(SpeechRecognizer.EXTRA_UTTERANCE_IDS, utteranceIds);
+
+            if (finalResult) {
+                bundle.putBoolean(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+                listener.onResults(bundle);
+            } else {
+                bundle.putBoolean(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+                listener.onPartialResults(bundle);
+            }
         }
     }
 
@@ -437,14 +510,15 @@ public class SpeechRecognizer {
 
         @Override
         protected void execute(RecognitionListener listener) {
-            listener.onError(exception);
+            // TODO use appropriate code https://developer.android.com/reference/android/speech/SpeechRecognizer.html
+            listener.onError(android.speech.SpeechRecognizer.ERROR_CLIENT);
         }
     }
 
     private class TimeoutEvent extends RecognitionEvent {
         @Override
         protected void execute(RecognitionListener listener) {
-            listener.onTimeout();
+            listener.onError(android.speech.SpeechRecognizer.ERROR_SPEECH_TIMEOUT);
         }
     }
 }
