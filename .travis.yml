@@ -30,3 +30,16 @@ before_install:
   - git clone https://github.com/cmusphinx/pocketsphinx
   - export POCKETSPHINX_HOME=`pwd`/pocketsphinx
   - export SPINXBASE_HOME=`pwd`/sphinxbase
+
+before_deploy:
+  - mv build/outputs/aar/pocketsphinx-android-5prealpha-release.aar  build/outputs/aar/pocketsphinx-android-5prealpha.aar
+
+deploy:
+  provider: bintray
+  file: descriptor.json
+  user: cesine
+  key:
+    secure: MX/XIxovXXaiQbbtOnUaUS5NxyLmLGJ0ShBBpujJogUtuERs+GdRnymZx/Bprp5s18AozkpI1ekG3AA/rv/BEzoO61lB5xGF/Zvs3G4QB/WAsLiCZ/iBncSsMqS6/Q+uJYZXw1/JJj02rZ9F2ERpCvvbxPQm9zWlXkc/P8s/5DQ=
+  # dry-run: true
+  on:
+    all_branches: true
