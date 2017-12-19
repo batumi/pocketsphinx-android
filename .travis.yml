@@ -32,7 +32,7 @@ before_install:
   - export SPINXBASE_HOME=`pwd`/sphinxbase
 
 before_deploy:
-  - mv build/outputs/aar/pocketsphinx-android-5prealpha-release.aar  build/outputs/aar/pocketsphinx-android-5prealpha.aar
+  - mv build/outputs/aar/pocketsphinx-android-v0.9-rc1-release.aar  build/outputs/aar/pocketsphinx-android-v0.9-rc1.aar
 
 deploy:
   provider: bintray

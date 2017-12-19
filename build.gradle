@@ -16,8 +16,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 5
-        versionName "5prealpha"
+        versionCode 6
+        versionName "v0.9-rc1"
         setProperty("archivesBaseName", "pocketsphinx-android-$versionName")
 	externalNativeBuild {
 	    cmake {
