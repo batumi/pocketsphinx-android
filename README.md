@@ -52,6 +52,29 @@ pocketsphinx-android-5prealpha-debug.aar in build/output.
 Using the library
 =================
 
+Add bintray maven to your repositories
+
+    allprojects {
+        repositories {
+            maven {
+                url  "https://dl.bintray.com"
+            }
+            jcenter()
+            google()
+        }
+    }
+
+
+Add `pocketsphinx-android` to your dependencies
+
+    dependencies {
+        implementation 'cesine.educmupocketsphinx:pocketsphinx-android:5prealpha@aar'
+    }
+
+
+Using the library locally
+=================
+
 Library is distributed as android archive AAR. You can add it to your project
 as usual with Android Studio or directly in gradle
 
