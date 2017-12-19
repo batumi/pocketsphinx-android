@@ -37,9 +37,9 @@ before_deploy:
 deploy:
   provider: bintray
   file: descriptor.json
-  user: cesine
+  user: nshmyrev
+  # TODO ecrypt yours here:
   key:
     secure: MX/XIxovXXaiQbbtOnUaUS5NxyLmLGJ0ShBBpujJogUtuERs+GdRnymZx/Bprp5s18AozkpI1ekG3AA/rv/BEzoO61lB5xGF/Zvs3G4QB/WAsLiCZ/iBncSsMqS6/Q+uJYZXw1/JJj02rZ9F2ERpCvvbxPQm9zWlXkc/P8s/5DQ=
-  # dry-run: true
   on:
     all_branches: true

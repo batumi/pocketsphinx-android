@@ -68,7 +68,7 @@ Add bintray maven to your repositories
 Add `pocketsphinx-android` to your dependencies
 
     dependencies {
-        implementation 'cesine.educmupocketsphinx:pocketsphinx-android:5prealpha@aar'
+        implementation 'edu.cmu.pocketsphinx.android:pocketsphinx-android:5prealpha@aar'
     }
 
 
