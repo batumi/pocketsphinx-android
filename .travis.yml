@@ -27,7 +27,7 @@ before_install:
   - unzip -oq android-ndk-r16b-linux-x86_64.zip && rm android-ndk-r16b-linux-x86_64.zip
   - export ANDROID_NDK_HOME=`pwd`/android-ndk-r16b
   - git clone https://github.com/cmusphinx/sphinxbase
-  - git clone https://github.com/cmusphinx/pocketsphinx
+  - git clone https://github.com/cesine/pocketsphinx
   - export POCKETSPHINX_HOME=`pwd`/pocketsphinx
   - export SPINXBASE_HOME=`pwd`/sphinxbase
 
