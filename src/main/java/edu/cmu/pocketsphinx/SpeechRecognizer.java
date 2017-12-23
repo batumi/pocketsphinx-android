@@ -75,7 +75,9 @@ public class SpeechRecognizer {
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
 
     private Callback mRecognitionCallback;
+    private String mUtteranceId;
     public static final String EXTRA_UTTERANCE_IDS = "cmusphinx.sourceforge.net.extra.UTTERANCE_IDS";
+    public static final String EXTRA_FILENAME = "cmusphinx.sourceforge.net.extra.FILENAME";
 
     /**
      * Creates speech recognizer. Recognizer holds the AudioRecord object, so you
@@ -350,9 +352,8 @@ public class SpeechRecognizer {
 
             Log.d(TAG, "Starting decoding");
 
-            // https://github.com/cmusphinx/pocketsphinx-android/pull/5#issuecomment-67852935
-            // decoder.startUtt("audio_utterance_" + System.currentTimeMillis()); // TODO how to use get_rawdata
-            decoder.startUtt();
+            mUtteranceId = "audio_utterance_" + System.currentTimeMillis();
+            decoder.startUtterance(mUtteranceId);
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
 
@@ -466,8 +467,7 @@ public class SpeechRecognizer {
             }
             ArrayList<String> utteranceIds = new ArrayList<String>();
             if (hypothesis != null) {
-                // utteranceIds.add(hypothesis.getUttid()); // Doesnt exist anymore
-                utteranceIds.add("audio_utterance_" + System.currentTimeMillis());
+                utteranceIds.add(mUtteranceId);
             } else {
                 utteranceIds.add(0+"");
             }
@@ -490,6 +490,7 @@ public class SpeechRecognizer {
             bundle.putStringArrayList(RecognizerIntent.EXTRA_RESULTS, hypotheses);
             bundle.putFloatArray(RecognizerIntent.EXTRA_CONFIDENCE_SCORES, confidences);
             bundle.putStringArrayList(SpeechRecognizer.EXTRA_UTTERANCE_IDS, utteranceIds);
+            bundle.putString(SpeechRecognizer.EXTRA_FILENAME, mUtteranceId + ".raw");
 
             if (finalResult) {
                 bundle.putBoolean(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
