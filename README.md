@@ -4,6 +4,20 @@ About
 This project is a wrapper for Pocketsphinx for Android providing
 high-level interface for recognizing the microphone input.
 
+### Install
+
+You can manually download the `.aar` and include it in your project from this url: https://bintray.com/fielddb/maven/edu.cmu.pocketsphinx
+
+To install it in your project via maven, add the maven repository to your Android build.gradle:
+
+```groovy
+repositories {
+    maven {
+        url  "https://dl.bintray.com/fielddb/maven"
+    }
+}
+```
+
 Build
 =====
 
