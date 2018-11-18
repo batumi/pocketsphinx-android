@@ -1,42 +1,49 @@
 buildscript {
     repositories {
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
 }
 
+version = 'v0.9-rc1'
+
 apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.2"
+  compileSdkVersion 27
+  buildToolsVersion "27.0.2"
 
-    defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 25
-        versionCode 6
-        versionName "v0.9-rc1"
-        setProperty("archivesBaseName", "pocketsphinx-android-$versionName")
-	externalNativeBuild {
-	    cmake {
-	    }
-	}
-        ndk {
-	    abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-	}
-    }
-    sourceSets {
-         main {
-              java.srcDirs = ['src/main/java', 'build/generated-src']
-         }
-    }
+  defaultConfig {
+    minSdkVersion 14
+    targetSdkVersion 25
+    versionCode 6
+    versionName version
+    setProperty("archivesBaseName", "pocketsphinx-android")
     externalNativeBuild {
-	cmake {
-    	    path "CMakeLists.txt"
-	}
+      cmake {
+      }
     }
+    ndk {
+      abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+    }
+  }
+  sourceSets {
+    main {
+      java.srcDirs = ['src/main/java', 'build/generated-src']
+    }
+  }
+  // externalNativeBuild {
+  //   cmake {
+  //     path "CMakeLists.txt"
+  //   }
+  // }
 }
 
 task mkdir {
@@ -67,4 +74,55 @@ task swigPs(type: Exec) {
         "$pocketsphinx_home/swig/pocketsphinx.i"
 }
 
-preBuild.dependsOn mkdir, swigSb, swigPs
+// preBuild.dependsOn mkdir, swigSb, swigPs
+
+task generateSourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier 'sources'
+}
+
+task generateJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath()
+            .join(File.pathSeparator))
+    classpath += configurations.compile
+    failOnError false
+}
+
+task generateJavadocsJar(type: Jar) {
+    from generateJavadocs.destinationDir
+    classifier 'javadoc'
+}
+
+generateJavadocsJar.dependsOn generateJavadocs
+
+artifacts.add("archives", file('build/libs/pocketsphinx-android-' + version + '-javadoc.jar'))
+artifacts.add("archives", file('build/libs/pocketsphinx-android-' + version + '-sources.jar'))
+// artifacts {
+//    archives generateJavaDocsJar,
+//    archives generateSourcesJar
+// }
+//
+System.print System.getenv('BINTRAY_USER')
+
+group = 'edu.cmu.pocketsphinx'
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    pkg {
+        repo = 'maven'
+        name = group
+        userOrg = 'fielddb'
+        version {
+            name = version
+            desc = 'fork of pocketsphinx build for Android which can save raw audio to disk'
+            released = new Date()
+            vcsTag = version
+        }
+
+        licenses = ['BSD 2-Clause']
+        vcsUrl = 'https://github.com/batumi/pocketsphinx-android.git'
+        websiteUrl = 'https://github.com/batumi/pocketsphinx-android'
+    }
+    configurations = ['archives']
+}

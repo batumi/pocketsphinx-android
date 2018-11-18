@@ -68,3 +68,27 @@ as usual with Android Studio or directly in gradle
 For further information on usage please see the wiki page:
 
 http://cmusphinx.sourceforge.net/wiki/tutorialandroid
+
+
+
+
+### Release
+
+To publish a new release of this library, edit the `version` in `build.gradle' and set the ENV variables for `BINTRAY_USER` and `BINTRAY_API_KEY`
+
+```bash
+./gradlew tasks
+./gradlew install
+./gradlew clean
+./gradlew build
+./gradlew assembleRelease
+ls -alt build/outputs/aar/
+./gradlew generateSourcesJar
+./gradlew generateJavadocs
+./gradlew generateJavadocsJar
+./gradlew bintrayUpload
+```
+
+
+[travis-url]: https://travis-ci.org/batumi/pocketsphinx-android
+[travis-image]: https://travis-ci.org/batumi/pocketsphinx-android.svg?branch=master
