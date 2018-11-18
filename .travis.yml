@@ -34,6 +34,7 @@ before_install:
 before_deploy:
   - mv build/outputs/aar/pocketsphinx-android-v0.9-rc1-release.aar  build/outputs/aar/pocketsphinx-android-v0.9-rc1.aar
 
+# See also Readme to deploy manually
 deploy:
   provider: bintray
   file: descriptor.json

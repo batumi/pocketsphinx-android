@@ -39,11 +39,11 @@ android {
       java.srcDirs = ['src/main/java', 'build/generated-src']
     }
   }
-  // externalNativeBuild {
-  //   cmake {
-  //     path "CMakeLists.txt"
-  //   }
-  // }
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
 }
 
 task mkdir {
